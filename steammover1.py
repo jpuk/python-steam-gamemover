@@ -31,19 +31,138 @@ import os
 import shutil
 import sys
 from os import walk
-
+import winreg
 
 # todo
 # anything registry related
 # -uninstall paths
 # checking for steam libries in registry if pos
 
-# class definition for steam game
+# steamtools - acf code
+def scan_for_next_token(f):
+    while True:
+        byte = f.read(1)
+        if byte == '':
+            raise EOFError
+        if not byte.isspace():
+            return byte
+
+
+def parse_quoted_token(f):
+    ret = ''
+    while True:
+        byte = f.read(1)
+        if byte == '':
+            raise EOFError
+        if byte == '"':
+            return ret
+        ret += byte
+
+
+class AcfNode(dict):
+
+    def __init__(self, f):
+        while True:
+            try:
+                token_type = scan_for_next_token(f)
+            except EOFError:
+                return
+            if token_type == '}':
+                return
+            if token_type != '"':
+                raise TypeError('Error parsing ACF format - missing node name?')
+            name = parse_quoted_token(f)
+
+            token_type = scan_for_next_token(f)
+            if token_type == '"':
+                self[name] = parse_quoted_token(f)
+            elif token_type == '{':
+                self[name] = AcfNode(f)
+            else:
+                assert (False)
+
+
+def parse_acf(filename):
+    with open(filename, 'r') as f:
+        return AcfNode(f)
+
+
+# class definitions
+
+
+class GameLibrary:
+    def __init__(self, libraryPath, statusWindow = None):
+        self.statusWindow = statusWindow
+        self.libraryPath = libraryPath
+        self.isPathVerified = False
+        self.checkSteamLibsValid(self.libraryPath)
+        if self.isPathVerified is True:
+            self.returnedGamesLibrary = self.findGamesInLibrary()
+            self.gameObjects = self.returnedGamesLibrary[0]
+            self.numberOfGamesInLibrary = self.returnedGamesLibrary[1]
+        else:
+            self.returnedGamesLibrary = None
+            self.gameObjects = None
+            self.numberOfGamesInLibrary = None
+            self.isPathVerified = False
+
+    def checkSteamLibsValid(self, libraryPath):
+        # 1 exists 0 does not
+        # check for steam.dll file at path
+        # todo: check for trailing slash in input and remove
+        if os.path.isfile(libraryPath + r"\steam.dll") == True:
+            if self.statusWindow is not None:
+                self.statusWindow.addItem("Library {} is valid".format(libraryPath))
+            print("Library {} is valid".format(libraryPath))
+            self.isPathVerified = True
+        else:
+            if self.statusWindow is not None:
+                self.statusWindow.addItem("Library {} is invalid".format(libraryPath))
+            print("Library {} is invalid".format(libraryPath))
+            self.isPathVerified = False
+        return self.isPathVerified
+
+    def findGamesInLibrary(self):
+        if self.statusWindow is not None:
+            self.statusWindow.addItem("Checking library {0} for games...\n".format(self.libraryPath))
+        print("Checking library {0} for games...\n".format(self.libraryPath))
+
+        # scan directory and create list of Game classes
+        steamGames = []
+        folders = []
+        i = 0
+        commonLibraryPath = os.path.join(self.libraryPath, "steamapps", "common")
+        for (dirpath, dirnames, filenames) in walk(commonLibraryPath):
+            # print(dirnames)
+            folders.extend(dirnames)
+            break
+        # print("Found {0} games in steam directory".format(len(folder)))
+
+        # remove any backup games from the list by looking for .bak
+        skipcount = 0
+        for gameDir in folders:
+            # initialize class to hold game info
+            if str(gameDir).find(".bak") == -1:
+                if self.statusWindow is not None:
+                    currentGame = Game(i, self.libraryPath, gameDir, self.statusWindow)
+                else:
+                    currentGame = Game(i, self.libraryPath, gameDir)
+                steamGames.append(currentGame)
+            else:
+                skipcount = skipcount + 1
+                if self.statusWindow is not None:
+                    self.statusWindow.addItem("Skipping backup game {0}. Don't forget to remove this if it's working in the new game library!".format(
+                        gameDir))
+                print("Skipping backup game {0}. Don't forget to remove this if it's working in the new game library!".format(
+                        gameDir))
+            i = i + 1
+
+        return (steamGames, (len(folders) - skipcount))
 
 
 class Game:
-    # steamLibrary = ""
-    def __init__(self, menuId, steamLibrary, gameDirName):
+    def __init__(self, menuId, steamLibrary, gameDirName, statusWindow = None):
+        self.statusWindow = statusWindow
         self.menuId = menuId
         self.gameName = ""
         self.sizeOnDisk = 0
@@ -81,10 +200,15 @@ class Game:
     def gamePath(self):
         # return game file path
         if os.path.isdir(os.path.normpath(os.path.join(self.steamLibrary, "steamapps", "common", self.gameDirName))):
+            if self.statusWindow is not None:
+                self.statusWindow.addItem(os.path.normpath(os.path.join(self.steamLibrary, "steamapps", "common", self.gameDirName)))
             print(os.path.normpath(os.path.join(self.steamLibrary, "steamapps", "common", self.gameDirName)))
             return os.path.normpath(os.path.join(self.steamLibrary, "steamapps", "common", self.gameDirName))
         else:
             path = ""
+            if self.statusWindow is not None:
+                self.statusWindow.addItem("Game path not found {0}".format(
+                os.path.normpath(os.path.join(self.steamLibrary, "steamapps", "common", self.gameDirName))))
             print("Game path not found {0}".format(
                 os.path.normpath(os.path.join(self.steamLibrary, "steamapps", "common", self.gameDirName))))
             return path
@@ -93,15 +217,15 @@ class Game:
         # return workshop files path
         if os.path.isdir(
                 os.path.normpath(os.path.join(self.steamLibrary, "steamapps", "workshop", "content", self.steamId))):
+            if self.statusWindow is not None:
+                self.statusWindow.addItem("Game has workshop files {0}".format(
+                os.path.normpath(os.path.join(self.steamLibrary, "steamapps", "workshop", "content", self.steamId))))
             print("Game has workshop files {0}".format(
                 os.path.normpath(os.path.join(self.steamLibrary, "steamapps", "workshop", "content", self.steamId))))
             return os.path.normpath(os.path.join(self.steamLibrary, "steamapps", "workshop", "content", self.steamId))
         else:
             path = ""
             return path
-
-    # def gameName(self):
-    #	return self.gameName
 
     def findGameManifestFiles(self):
         steamAppsPath = os.path.normpath(os.path.join(self.steamLibrary, "steamapps"))
@@ -132,46 +256,62 @@ class Game:
 
     def copyGame(self, newLibraryPath):
         if self.manifestFilePath != "":
+            if self.statusWindow is not None:
+                self.statusWindow.addItem("Copying manifest...")
             print("Copying manifest...")
             try:
                 shutil.copy2(self.manifestFilePath, os.path.join(newLibraryPath, "steamapps"))
             except FileExistsError:
-                print(
-                    "Oopps, this game already exists in the new location. Please check and make amendments manually. Quiting\n\n")
+                if self.statusWindow is not None:
+                    self.statusWindow.addItem("Oopps, this game already exists in the new location. Please check and make amendments manually.")
+                print("Oopps, this game already exists in the new location. Please check and make amendments manually. Quiting\n\n")
             except IOError:
-                print(
-                    "IO Error, please check that all paths are correct, the destination hard drive has enough space, etc")
+                if self.statusWindow is not None:
+                    self.statusWindow.addItem("IO Error, please check that all paths are correct, the destination hard drive has enough space, etc")
+                print("IO Error, please check that all paths are correct, the destination hard drive has enough space, etc")
         if self.gameDir != "":
+            if self.statusWindow is not None:
+                self.statusWindow.addItem("Copying game files....")
             print("Copying game files....")
             try:
                 shutil.copytree(self.gameDir, os.path.join(newLibraryPath, "steamapps", "Common", self.gameDirName))
             except FileExistsError:
-                print(
-                    "Oopps, this game already exists in the new location. Please check and make amendments manually. Quiting\n\n")
+                if self.statusWindow is not None:
+                    self.statusWindow.addItem("Oopps, this game already exists in the new location. Please check and make amendments manually.")
+                print("Oopps, this game already exists in the new location. Please check and make amendments manually. Quiting\n\n")
             except IOError:
-                print(
-                    "IO Error, please check that all paths are correct, the destination hard drive has enough space, etc")
+                if self.statusWindow is not None:
+                    self.statusWindow.addItem("IO Error, please check that all paths are correct, the destination hard drive has enough space, etc")
+                print("IO Error, please check that all paths are correct, the destination hard drive has enough space, etc")
         if self.workshopManifestFilePath != "":
+            if self.statusWindow is not None:
+                self.statusWindow.addItem("Copying workshop manifest file...")
             print("Copying workshop manifest file...")
             try:
                 shutil.copy2(self.workshopManifestFilePath, os.path.join(newLibraryPath, "steamapps", "workshop"))
             except FileExistsError:
-                print(
-                    "Oopps, this game already exists in the new location. Please check and make amendments manually. Quiting\n\n")
+                if self.statusWindow is not None:
+                    self.statusWindow.addItem("Oopps, this game already exists in the new location. Please check and make amendments manually.")
+                print("Oopps, this game already exists in the new location. Please check and make amendments manually. Quiting\n\n")
             except IOError:
-                print(
-                    "IO Error, please check that all paths are correct, the destination hard drive has enough space, etc")
+                if self.statusWindow is not None:
+                    self.statusWindow.addItem("IO Error, please check that all paths are correct, the destination hard drive has enough space, etc")
+                print("IO Error, please check that all paths are correct, the destination hard drive has enough space, etc")
         if self.workshopDir != "":
+            if self.statusWindow is not None:
+                self.statusWindow.addItem("Copying workshop files...")
             print("Copying workshop files...")
             try:
                 shutil.copytree(self.workshopDir,
                                 os.path.join(newLibraryPath, "steamapps", "workshop", "content", self.steamId))
             except FileExistsError:
-                print(
-                    "Oopps, this game already exists in the new location. Please check and make amendments manually. Quiting\n\n")
+                if self.statusWindow is not None:
+                    self.statusWindow.addItem("Oopps, this game already exists in the new location. Please check and make amendments manually.")
+                print("Oopps, this game already exists in the new location. Please check and make amendments manually. Quiting\n\n")
             except IOError:
-                print(
-                    "IO Error, please check that all paths are correct, the destination hard drive has enough space, etc")
+                if self.statusWindow is not None:
+                    self.statusWindow.addItem("IO Error, please check that all paths are correct, the destination hard drive has enough space, etc")
+                print("IO Error, please check that all paths are correct, the destination hard drive has enough space, etc")
 
         # rename the originals and prompt user to delete them after checking that the game works
         renamedManifest = str(self.manifestFilePath) + ".bak"
@@ -187,13 +327,20 @@ class Game:
         if os.path.isdir(self.workshopDir):
             os.rename(self.workshopDir, renamedWorkshopDir)
 
-        print(
-            "All Steam game files have now been copied to {0}\nThe original files and folders have not been removed. They have been renamed to avoid conflicting with the new steam library.\nPlease make sure to remove the following files/folders once you have checked that the game works in the new location.\n".format(
+        if self.statusWindow is not None:
+            self.statusWindow.addItem("All Steam game files have now been copied to {0}".format(newLibraryPath))
+            self.statusWindow.addItem("The original files and folders have not been removed. They have been renamed to avoid conflicting with the new steam library.")
+            self.statusWindow.addItem("Please make sure to remove the following files/folders once you have checked that the game works in the new location.")
+        print("All Steam game files have now been copied to {0}\nThe original files and folders have not been removed. They have been renamed to avoid conflicting with the new steam library.\nPlease make sure to remove the following files/folders once you have checked that the game works in the new location.\n".format(
                 newLibraryPath))
+        if self.statusWindow is not None:
+            self.statusWindow.addItem("{0}\n{1}\n{2}\n{3}\n".format(renamedManifest, renamedGamedDir, renamedWorkshopManifest,
+                                            renamedWorkshopDir))
         print("{0}\n{1}\n{2}\n{3}\n".format(renamedManifest, renamedGamedDir, renamedWorkshopManifest,
                                             renamedWorkshopDir))
-        print(
-            "If the game is not working in the new location, close Steam and then rename the original files by removing '.bak' from the end of each of their filenames and deleting any duplicates in the new steam library")
+        if self.statusWindow is not None:
+            self.statusWindow.addItem("If the game is not working in the new location, close Steam and then rename the original files by removing '.bak' from the end of each of their filenames and deleting any duplicates in the new steam library")
+        print("If the game is not working in the new location, close Steam and then rename the original files by removing '.bak' from the end of each of their filenames and deleting any duplicates in the new steam library")
 
     def scanManifest(self, manifestFilePath):
         # print("Scanning manifest file {0}".format(manifestFilePath))
@@ -202,10 +349,26 @@ class Game:
         self.sizeOnDisk = acf['AppState']['SizeOnDisk']
         return acf
 
-    def scan_registry(self):
+    def scan_registry_for_uninstall(self):
+        if self.statusWindow is not None:
+            self.statusWindow.addItem()
         print("Scanning registry for refrances of the game path {0}".format(self.gameDirName))
         # do walk of registry and compare keys to gameDirName
+
         return "result"
+
+    def update_registry_uninstall_location(self, newSteamLibrary):
+        uninstall_reg_key = r"CurrentVersion\Uninstall\Steam App " + self.steamId + r'\InstallLocation'
+        new_install_location = newSteamLibrary + "steamapps\\common\\" + self.gameName
+        if self.statusWindow is not None:
+            self.statusWindow.addItem()
+        print("Updating registry key {0} with new uninstall location {1}\n".format(uninstall_reg_key, new_install_location))
+        #try:
+        registry_key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r'SOFTWARE\Microsoft\Windows', reserved=0, access=winreg.KEY_WRITE)
+        #winreg.SetValueEx(registry_key, uninstall_reg_key, 0, winreg.REG_SZ, new_install_location)
+        winreg.CloseKey(registry_key)
+        #except:
+        #    print("Error setting reg key")
 
 
 def main():
@@ -234,7 +397,7 @@ def main():
     oldLibraryPath = steamLibraries[0]
     newLibraryPath = steamLibraries[1]
     steamGames = []
-    foundInLib = findGamesInLibrary(oldLibraryPath)  # search steam library for games
+    foundInLib = findGamesInLibrary(oldLibraryPath, newLibraryPath)  # search steam library for games
     steamGames = foundInLib[0]
     numberOfGames = foundInLib[1]
     print("\nFound {0} games in steam directory".format(numberOfGames))
@@ -289,55 +452,7 @@ def main():
 
     input("Press enter to quit\n\n")
 
-
-def scan_for_next_token(f):
-    while True:
-        byte = f.read(1)
-        if byte == '':
-            raise EOFError
-        if not byte.isspace():
-            return byte
-
-
-def parse_quoted_token(f):
-    ret = ''
-    while True:
-        byte = f.read(1)
-        if byte == '':
-            raise EOFError
-        if byte == '"':
-            return ret
-        ret += byte
-
-
-class AcfNode(dict):
-
-    def __init__(self, f):
-        while True:
-            try:
-                token_type = scan_for_next_token(f)
-            except EOFError:
-                return
-            if token_type == '}':
-                return
-            if token_type != '"':
-                raise TypeError('Error parsing ACF format - missing node name?')
-            name = parse_quoted_token(f)
-
-            token_type = scan_for_next_token(f)
-            if token_type == '"':
-                self[name] = parse_quoted_token(f)
-            elif token_type == '{':
-                self[name] = AcfNode(f)
-            else:
-                assert (False)
-
-
-def parse_acf(filename):
-    with open(filename, 'r') as f:
-        return AcfNode(f)
-
-
+# todo refactor command line function to work with new gamelibrary object
 def getSteamLibs():
     libsValid = False
     # get steam libries from cmd line, if none provided ask user for them
@@ -375,51 +490,6 @@ def getSteamLibs():
             libStatus = checkSteamLibsValid(oldLibraryPath, newLibraryPath)
 
     return (oldLibraryPath, newLibraryPath)
-
-
-def checkSteamLibsValid(oldLibraryPath, newLibraryPath):
-    # 1 exists 0 does not
-    libStatus = [False, False]
-    # check for steam.dll file at path
-    olib = oldLibraryPath + "\\steam.dll"
-    nlib = newLibraryPath + "\\steam.dll"
-    if os.path.isfile(olib) == True:
-        libStatus[0] = True
-    # sys.exit(0)
-    if os.path.isfile(nlib) == True:
-        libStatus[1] = True
-    # sys.exit(0)
-    return libStatus
-
-
-def findGamesInLibrary(libraryPath):
-    print("Checking library {0} for games...\n".format(libraryPath))
-
-    # scan directory and create list of Game classes
-    steamGames = []
-    folders = []
-    i = 0
-    commonLibraryPath = os.path.join(libraryPath, "steamapps", "common")
-    for (dirpath, dirnames, filenames) in walk(commonLibraryPath):
-        # print(dirnames)
-        folders.extend(dirnames)
-        break
-    # print("Found {0} games in steam directory".format(len(folder)))
-
-    # remove any backup games from the list by looking for .bak
-    skipcount = 0
-    for gameDir in folders:
-        # initialize class to hold game info
-        if str(gameDir).find(".bak") == -1:
-            currentGame = Game(i, libraryPath, gameDir)
-            steamGames.append(currentGame)
-        else:
-            skipcount = skipcount + 1
-            print(
-                "Skipping backup game {0}. Don't forget to remove this if it's working in the new game library!".format(
-                    gameDir))
-        i = i + 1
-    return (steamGames, (len(folders) - skipcount))
 
 
 if __name__ == "__main__":
