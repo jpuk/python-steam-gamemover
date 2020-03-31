@@ -172,7 +172,6 @@ class Ui_MainWindow(object):
         if self.newGameLibrary.isPathVerified is True:
             self.updateStatusBox("About to copy game")
             print("About to copy game")
-            # todo remove game from returnedGamesListBox
             self.oldGameLibrary.gameObjects[self.gameResultsListBox.currentIndex().row()].copyGame(self.newGameLibrary.libraryPath)
             #search the old library again now the game has been moved
             self.searchOldLibraryButtonClicked()

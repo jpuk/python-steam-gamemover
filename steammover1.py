@@ -235,7 +235,7 @@ class Game:
 
     def findGameManifestFiles(self):
         steamAppsPath = os.path.normpath(os.path.join(self.steamLibrary, "steamapps"))
-        print("Searching for manifest file for {0} in {1}".format(self.gameDirName, steamAppsPath))
+        #print("Searching for manifest file for {0} in {1}".format(self.gameDirName, steamAppsPath))
 
         manifestFiles = glob.glob(steamAppsPath + "\\*.acf")
         #print(manifestFiles)
@@ -247,7 +247,7 @@ class Game:
             fd = open(file)
             for line in fd:
                 if line.find("{}\"".format(self.gameDirName)) != -1:
-                    print("manifest found!")
+                    #print("manifest found!")
                     foundManifest = file
                     return foundManifest
                 #else:
@@ -369,15 +369,15 @@ class Game:
         return "result"
 
     def update_registry_uninstall_location(self, newSteamLibrary):
-        uninstall_reg_key = r"CurrentVersion\Uninstall\Steam App " + self.steamId + r'\InstallLocation'
+        uninstall_reg_key = winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Steam App " + self.steamId + r'\InstallLocation')
         new_install_location = newSteamLibrary + "steamapps\\common\\" + self.gameName
         if self.statusWindow is not None:
             self.statusWindow("Updating registry key {0} with new uninstall location {1}\n".format(uninstall_reg_key, new_install_location))
         print("Updating registry key {0} with new uninstall location {1}\n".format(uninstall_reg_key, new_install_location))
         #try:
-        registry_key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r'SOFTWARE\Microsoft\Windows', reserved=0, access=winreg.KEY_WRITE)
-        #winreg.SetValueEx(registry_key, uninstall_reg_key, 0, winreg.REG_SZ, new_install_location)
-        winreg.CloseKey(registry_key)
+        #registry_key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r'SOFTWARE\Microsoft\Windows', reserved=0, access=winreg.KEY_WRITE )
+        winreg.SetValue(uninstall_reg_key, None, winreg.REG_SZ, new_install_location)
+        winreg.CloseKey(uninstall_reg_key)
         #except:
         #    print("Error setting reg key")
 
