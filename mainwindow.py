@@ -132,10 +132,11 @@ class Ui_MainWindow(object):
 
     # message handler functions
     def searchOldLibraryButtonClicked(self):
+        self.updateStatusBox("Searching library for games\n")
         print("Searching library for games\n")
         self.gameResultsListBox.clear()
         if self.oldLibraryTextBox != "":
-            self.oldGameLibrary = steammover.GameLibrary(self.oldLibraryTextBox.text(), self.statusListBox)
+            self.oldGameLibrary = steammover.GameLibrary(self.oldLibraryTextBox.text(), self.updateStatusBox)
             self.numberOfGamesInLibraryLabel.setText("Number of games in library: {}".format(self.oldGameLibrary.numberOfGamesInLibrary))
             for game in self.oldGameLibrary.gameObjects:
                 sizeInMB = (float(game.sizeOnDisk) / (1024.0 * 1024.0))
@@ -146,6 +147,7 @@ class Ui_MainWindow(object):
         selected_row = self.gameResultsListBox.currentIndex().row()
         selected_data = self.gameResultsListBox.currentIndex().data()
 
+        self.updateStatusBox("Game Library list box clicked - row: {} item: {}".format(selected_row, selected_data))
         print("Game Library list box clicked - row: {} item: {}".format(selected_row, selected_data))
 
         # clear existing results
@@ -162,15 +164,27 @@ class Ui_MainWindow(object):
         self.steamIdTextBox.setText(self.oldGameLibrary.gameObjects[selected_row].steamId)
 
     def moveGameButtonClicked(self):
+        self.updateStatusBox("Move game button clicked")
         print("Move game button clicked")
+        self.updateStatusBox("Validating new library at {}".format(self.newLibraryTextBox.text()))
         print("Validating new library at {}".format(self.newLibraryTextBox.text()))
-        self.newGameLibrary = steammover.GameLibrary(self.newLibraryTextBox.text(), self.statusListBox)
+        self.newGameLibrary = steammover.GameLibrary(self.newLibraryTextBox.text(), self.updateStatusBox())
         if self.newGameLibrary.isPathVerified is True:
+            self.updateStatusBox("About to copy game")
             print("About to copy game")
             # todo remove game from returnedGamesListBox
             self.oldGameLibrary.gameObjects[self.gameResultsListBox.currentIndex().row()].copyGame(self.newGameLibrary.libraryPath)
+            #search the old library again now the game has been moved
+            self.searchOldLibraryButtonClicked()
         else:
+            self.updateStatusBox("Validation of new library failed!")
             print("Validation of new library failed!")
+
+
+    def updateStatusBox(self, text = None):
+        self.statusListBox.addItem(text)
+        self.statusListBox.scrollToBottom()
+
 
 if __name__ == "__main__":
     import sys
