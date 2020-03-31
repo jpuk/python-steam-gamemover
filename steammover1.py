@@ -372,8 +372,15 @@ class Game:
 
 
 def main():
-    # check to see if steam library paths have been provided on the command line and if not prompt for them
-    steamLibraries = getSteamLibs()  # returns tuples with paths to libs
+    # check to see if steam library paths have been provided on the command line
+    if len(sys.argv) == 3:
+        # paths entered on cmdline
+        oldLibraryPath = os.path.normpath(sys.argv[1])
+        newLibraryPath = os.path.normpath(sys.argv[2])
+    else:
+        print(
+            "Please provide the path to steam the library you're moving to and from on the command line.\n\nExample...\nc:>steam-gamemove.py c:\\oldsteamlibrary\\ f:\\newsteamlibrary\\\n")
+        exit(1)
 
     # display welcome message and get permission to continue
     yes = set(['yes', 'y', 'ye', ''])
@@ -394,13 +401,24 @@ def main():
             print("Please respond with 'yes' or 'no' \n")
 
     # init object to hold details of games found in steam library
-    oldLibraryPath = steamLibraries[0]
-    newLibraryPath = steamLibraries[1]
-    steamGames = []
-    foundInLib = findGamesInLibrary(oldLibraryPath, newLibraryPath)  # search steam library for games
-    steamGames = foundInLib[0]
-    numberOfGames = foundInLib[1]
-    print("\nFound {0} games in steam directory".format(numberOfGames))
+    # check if steam librarys exist and are valid and if not quit
+    oldLibrary = GameLibrary(oldLibraryPath)
+    newLibrary = GameLibrary(newLibraryPath)
+
+    if oldLibrary.isPathVerified is False:
+        print("Old library path is not valid {}".format(oldLibraryPath))
+        exit(1)
+    if newLibrary.isPathVerified is False:
+        print("New library path is not valid {}".format(newLibraryPath))
+        exit(1)
+
+
+#########
+
+    steamGames = oldLibrary.gameObjects
+    numberOfGames = oldLibrary.numberOfGamesInLibrary
+
+    print("\nFound {0} games in old steam library".format(numberOfGames))
 
     # display list of found games
     i = 0
@@ -437,7 +455,7 @@ def main():
     copyyesno = False
     while copyyesno == False:
         choice = input(
-            "Are you sure you want to move the selected game to {0} (Please double check that Steam is not running before clicking yes) - (yes/no): ".format(
+            "Are you sure you want to move the selected game to {0} (Please double check that Steam is not running before typing yes) - (yes/no): ".format(
                 newLibraryPath)).lower()
         if choice in yes:
             print("You've selected yes\n")
@@ -451,45 +469,6 @@ def main():
             print("Please respond with 'yes' or 'no' \n")
 
     input("Press enter to quit\n\n")
-
-# todo refactor command line function to work with new gamelibrary object
-def getSteamLibs():
-    libsValid = False
-    # get steam libries from cmd line, if none provided ask user for them
-    oldLibraryPath = ""  # init as a cmd line may not always be provided
-    newLibraryPath = ""
-    if len(sys.argv) == 3:
-        # paths entered on cmdline
-        oldLibraryPath = os.path.normpath(sys.argv[1])
-        newLibraryPath = os.path.normpath(sys.argv[2])
-    else:
-        print(
-            "You can provide the paths to steam library you're moving to and from on the command line.\n\nExample...\nc:>steam-gamemove.py c:\\oldsteamlibrary\\ f:\\newsteamlibrary\\\nYou'll be prompted to enter them now...")
-    # sys.exit(0)
-    # check that the paths exist and if not prompt the user to enter the correct paths
-    while libsValid == False:
-        libStatus = checkSteamLibsValid(oldLibraryPath, newLibraryPath)
-
-        if libStatus == [True, True]:
-            print("Both paths exist and appear to be valid steam libraries...Good\n")
-            libsValid = True
-            break
-        if libStatus == [True, False]:
-            print("Old Library path exists")
-        elif libStatus == [False, False] or libStatus == [False, True]:
-            print(
-                "\nOld Steam Library path does not exist. (example c:\program files (x86)\SteamLibrary).\nEnter it on the next line followed by enter or press ctrl + c to quit")
-            oldLibraryPath = input(":>")
-            libStatus = checkSteamLibsValid(oldLibraryPath, newLibraryPath)
-        if libStatus == [False, True]:
-            print("New Library path exists")
-        elif libStatus == [False, False] or libStatus == [True, False]:
-            print(
-                "\nNew Steam Library path does not exist. (example d:\program files (x86)\SteamLibrary).\nEnter it on the next line followed by enter or press ctrl + c to quit")
-            newLibraryPath = input(":>")
-            libStatus = checkSteamLibsValid(oldLibraryPath, newLibraryPath)
-
-    return (oldLibraryPath, newLibraryPath)
 
 
 if __name__ == "__main__":
