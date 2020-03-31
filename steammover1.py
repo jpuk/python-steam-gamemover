@@ -377,7 +377,7 @@ class Game:
         if self.statusWindow is not None:
             self.statusWindow("Updating registry key {0} with new uninstall location {1}\n".format(subkey, new_install_location))
         print("Updating registry key {0} with new uninstall location {1}\n".format(subkey, new_install_location))
-
+        # todo error checking on updating registry key
         key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, subkey, 0, winreg.KEY_ALL_ACCESS | winreg.KEY_WOW64_64KEY)
         winreg.SetValueEx(key, "InstallLocation", 0, winreg.REG_SZ, new_install_location)
         winreg.CloseKey(key)

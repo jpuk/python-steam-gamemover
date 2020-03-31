@@ -103,12 +103,11 @@ class Ui_MainWindow(object):
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
-        self.retranslateUi(MainWindow)
-        QtCore.QMetaObject.connectSlotsByName(MainWindow)
         # my message handlers
         self.searchOldLibraryButton.clicked.connect(self.searchOldLibraryButtonClicked)
         self.gameResultsListBox.itemSelectionChanged.connect(self.gameResultListBoxSelectionChanged)
         self.moveGameButton.clicked.connect(self.moveGameButtonClicked)
+        self.menuQuit.triggered.connect(self.quitApp)
         #
 
     def retranslateUi(self, MainWindow):
@@ -184,6 +183,8 @@ class Ui_MainWindow(object):
         self.statusListBox.addItem(text)
         self.statusListBox.scrollToBottom()
 
+    def quitApp(self):
+        exit(1)
 
 if __name__ == "__main__":
     import sys
