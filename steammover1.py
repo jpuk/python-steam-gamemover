@@ -323,6 +323,8 @@ class Game:
                 if self.statusWindow is not None:
                     self.statusWindow("IO Error, please check that all paths are correct, the destination hard drive has enough space, etc")
                 print("IO Error, please check that all paths are correct, the destination hard drive has enough space, etc")
+        # update uninstall paths in registry
+        self.update_registry_uninstall_location(newLibraryPath)
 
         # rename the originals and prompt user to delete them after checking that the game works
         renamedManifest = str(self.manifestFilePath) + ".bak"
@@ -368,18 +370,17 @@ class Game:
 
         return "result"
 
-    def update_registry_uninstall_location(self, newSteamLibrary):
-        uninstall_reg_key = winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Steam App " + self.steamId + r'\InstallLocation')
-        new_install_location = newSteamLibrary + "steamapps\\common\\" + self.gameName
+    def update_registry_uninstall_location(self, newSteamLibraryPath):
+        new_install_location = newSteamLibraryPath + "\\steamapps\\common\\" + self.gameName
+        subkey = r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Steam App " + self.steamId
+
         if self.statusWindow is not None:
-            self.statusWindow("Updating registry key {0} with new uninstall location {1}\n".format(uninstall_reg_key, new_install_location))
-        print("Updating registry key {0} with new uninstall location {1}\n".format(uninstall_reg_key, new_install_location))
-        #try:
-        #registry_key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r'SOFTWARE\Microsoft\Windows', reserved=0, access=winreg.KEY_WRITE )
-        winreg.SetValue(uninstall_reg_key, None, winreg.REG_SZ, new_install_location)
-        winreg.CloseKey(uninstall_reg_key)
-        #except:
-        #    print("Error setting reg key")
+            self.statusWindow("Updating registry key {0} with new uninstall location {1}\n".format(subkey, new_install_location))
+        print("Updating registry key {0} with new uninstall location {1}\n".format(subkey, new_install_location))
+
+        key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, subkey, 0, winreg.KEY_ALL_ACCESS | winreg.KEY_WOW64_64KEY)
+        winreg.SetValueEx(key, "InstallLocation", 0, winreg.REG_SZ, new_install_location)
+        winreg.CloseKey(key)
 
 
 def main():
