@@ -38,6 +38,7 @@ import winreg
 # -uninstall paths
 # checking for steam libries in registry if pos
 
+
 # steamtools - acf code
 def scan_for_next_token(f):
     while True:
@@ -95,9 +96,9 @@ class GameLibrary:
         self.statusWindow = statusWindow
         self.libraryPath = libraryPath
         self.isPathVerified = False
-        self.checkSteamLibsValid(self.libraryPath)
+        self.check_steam_library_valid(self.libraryPath)
         if self.isPathVerified is True:
-            self.returnedGamesLibrary = self.findGamesInLibrary()
+            self.returnedGamesLibrary = self.find_games_in_library()
             self.gameObjects = self.returnedGamesLibrary[0]
             self.numberOfGamesInLibrary = self.returnedGamesLibrary[1]
         else:
@@ -107,7 +108,7 @@ class GameLibrary:
             self.numberOfGamesInLibrary = None
             self.isPathVerified = False
 
-    def checkSteamLibsValid(self, libraryPath):
+    def check_steam_library_valid(self, libraryPath):
         # 1 exists 0 does not
         # check for steam.dll file at path
         # todo: check for trailing slash in input and remove
@@ -123,7 +124,7 @@ class GameLibrary:
             self.isPathVerified = False
         return self.isPathVerified
 
-    def findGamesInLibrary(self):
+    def find_games_in_library(self):
         if self.statusWindow is not None:
             self.statusWindow("Checking library {0} for games...\n".format(self.libraryPath))
         print("Checking library {0} for games...\n".format(self.libraryPath))
@@ -169,30 +170,30 @@ class Game:
         self.sizeOnDisk = 0
         self.steamLibrary = steamLibrary
         self.gameDirName = gameDirName
-        if self.findGameManifestFiles() is not None:
-            self.manifestFilePath = self.findGameManifestFiles()
+        if self.find_game_manifest_file() is not None:
+            self.manifestFilePath = self.find_game_manifest_file()
         else:
             print("Error settings self.mainfestFilePath. Mainfest might be missing for game?")
             exit(1)
 
-        self.gameDir = self.gamePath()
-        self.steamId = self.findSteamId()
-        self.workshopManifestFilePath = self.workshopManifestPath()
+        self.gameDir = self.get_game_path()
+        self.steamId = self.find_steam_id()
+        self.workshopManifestFilePath = self.get_workshop_manifest_path()
         if self.workshopManifestFilePath != "":
-            self.workshopDir = self.workshopPath()
+            self.workshopDir = self.get_workshop_path()
         else:
             self.workshopDir = ""
         if self.manifestFilePath != "":
-            self.manifestContents = self.scanManifest(self.manifestFilePath)
+            self.manifestContents = self.scan_manifest(self.manifestFilePath)
         else:
             self.manifestContents = []
 
-    def manifestPath(self):
+    def get_manifest_path(self):
         # return manifest path
         manifestFileName = "appmanifest_" + str(steamId) + ".acf"
         return os.path.normpath(os.path.joinpath(steamLibrary, "steamapps", manifestFileName))
 
-    def workshopManifestPath(self):
+    def get_workshop_manifest_path(self):
         # return workshop manifest path
         workshopManifestFileName = "appworkshop_" + str(self.steamId) + ".acf"
         if os.path.isfile(
@@ -203,7 +204,7 @@ class Game:
             path = ""
             return path
 
-    def gamePath(self):
+    def get_game_path(self):
         # return game file path
         if os.path.isdir(os.path.normpath(os.path.join(self.steamLibrary, "steamapps", "common", self.gameDirName))):
             if self.statusWindow is not None:
@@ -219,7 +220,7 @@ class Game:
                 os.path.normpath(os.path.join(self.steamLibrary, "steamapps", "common", self.gameDirName))))
             return path
 
-    def workshopPath(self):
+    def get_workshop_path(self):
         # return workshop files path
         if os.path.isdir(
                 os.path.normpath(os.path.join(self.steamLibrary, "steamapps", "workshop", "content", self.steamId))):
@@ -233,7 +234,7 @@ class Game:
             path = ""
             return path
 
-    def findGameManifestFiles(self):
+    def find_game_manifest_file(self):
         steamAppsPath = os.path.normpath(os.path.join(self.steamLibrary, "steamapps"))
         #print("Searching for manifest file for {0} in {1}".format(self.gameDirName, steamAppsPath))
 
@@ -256,7 +257,7 @@ class Game:
             if foundManifest != "":
                 return foundManifest
 
-    def findSteamId(self):
+    def find_steam_id(self):
         # extract steam id from manifest filename
         if self.manifestFilePath is None:
             print("Error, manifest file path is type None")
@@ -265,7 +266,7 @@ class Game:
         print("Found steam id = {0}".format(substr[1].split(".",1)[0]))
         return substr[1].split(".", 1)[0]
 
-    def copyGame(self, newLibraryPath):
+    def copy_game(self, newLibraryPath):
         if self.manifestFilePath != "":
             if self.statusWindow is not None:
                 self.statusWindow("Copying manifest...")
@@ -355,7 +356,7 @@ class Game:
             self.statusWindow("If the game is not working in the new location, close Steam and then rename the original files by removing '.bak' from the end of each of their filenames and deleting any duplicates in the new steam library")
         print("If the game is not working in the new location, close Steam and then rename the original files by removing '.bak' from the end of each of their filenames and deleting any duplicates in the new steam library")
 
-    def scanManifest(self, manifestFilePath):
+    def scan_manifest(self, manifestFilePath):
         print("Scanning manifest file {0}".format(manifestFilePath))
         acf = parse_acf(manifestFilePath)
         self.gameName = acf['AppState']['name']
@@ -472,7 +473,7 @@ def main():
         if choice in yes:
             print("You've selected yes\n")
             copyyesno = True
-            steamGames[selectedGame].copyGame(
+            steamGames[selectedGame].copy_game(
                 newLibraryPath)  # call .copygame method of game class to copy all components of game to new library
         elif choice in no:
             print("You've selected no. Quiting!")
