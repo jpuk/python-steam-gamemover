@@ -32,6 +32,7 @@ import shutil
 import sys
 from os import walk
 import winreg
+import string
 
 # todo
 # anything registry related
@@ -89,6 +90,34 @@ def parse_acf(filename):
 
 
 # class definitions
+
+class LibraryFinder:
+    def __init__(self, drive_list = None):
+        self.found_steam_library_paths = []
+        if drive_list is None:
+            available_drives = ['%s:\\' % d for d in string.ascii_uppercase if os.path.exists('%s:' % d)]
+        else:
+            available_drives = drive_list
+
+        for drive in available_drives:
+            path = os.path.abspath(drive)
+            self.search_folders_for_steam_dll(path)
+
+    def search_folders_for_steam_dll(self, dirname_f):
+        file_found = False
+        for (dirpath_o, dirnames_o, filenames_o) in walk(dirname_f):
+            if file_found is not True:
+                for filename in filenames_o:
+                    if str(filename).lower() == "steam.dll":
+                        print("steam.dll found {}".format(os.path.abspath(dirpath_o)))
+                        self.found_steam_library_paths.append(os.path.abspath(dirpath_o))
+                        file_found = True
+                        break
+                if file_found is not True:
+                    for dir_i in dirnames_o:
+                        self.search_folders_for_steam_dll(dirpath_o + "\\" + dir_i)
+
+            break
 
 
 class GameLibrary:
