@@ -27,7 +27,6 @@
 
 import glob
 import os
-# import re
 import shutil
 import sys
 from os import walk
