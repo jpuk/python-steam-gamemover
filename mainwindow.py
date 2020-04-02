@@ -10,6 +10,7 @@ import steammover1 as steammover
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 
+
 class Ui_MainWindow(object):
     oldGameLibrary = object
     newGameLibrary = object
@@ -127,6 +128,8 @@ class Ui_MainWindow(object):
         self.searchForLibrariesPushButton.clicked.connect(self.search_for_libraries_push_button_clicked)
         self.oldLibrarySelectionListBox.itemSelectionChanged.connect(self.old_library_selection_box_selection_changed)
         self.newLibrarySelectionListBox.itemSelectionChanged.connect(self.new_library_selection_box_selection_changed)
+        self.oldLibraryPathSelectButton.clicked.connect(self.old_library_path_selection_button_clicked)
+        self.newLibraryPathSelectButton.clicked.connect(self.new_library_path_selection_button_clicked)
         #
 
     def retranslateUi(self, MainWindow):
@@ -153,6 +156,18 @@ class Ui_MainWindow(object):
         self.actionQuit.setText(_translate("MainWindow", "Quit"))
 
     # message handler functions
+    def old_library_path_selection_button_clicked(self):
+        print("old library path selection box clicked")
+        dirname = QtWidgets.QFileDialog.getExistingDirectory()
+        #print(dirname)
+        self.oldLibraryTextBox.setText(dirname)
+
+    def new_library_path_selection_button_clicked(self):
+        print("old library path selection box clicked")
+        dirname = QtWidgets.QFileDialog.getExistingDirectory()
+        # print(dirname)
+        self.newLibraryTextBox.setText(dirname)
+
     def search_old_library_button_clicked(self):
         self.update_status_box("Searching library for games\n")
         print("Searching library for games\n")
