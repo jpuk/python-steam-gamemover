@@ -459,6 +459,12 @@ class Game:
         winreg.SetValueEx(key, "InstallLocation", 0, winreg.REG_SZ, new_install_location)
         winreg.CloseKey(key)
 
+# functions
+
+def is_steam_running():
+    print("Checking if Steam is running...")
+
+
 
 def main():
     # check to see if steam library paths have been provided on the command line

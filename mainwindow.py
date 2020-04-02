@@ -144,6 +144,7 @@ class Ui_MainWindow(object):
         self.newLibrarySelectionListBox.itemSelectionChanged.connect(self.new_library_selection_box_selection_changed)
         self.oldLibraryPathSelectButton.clicked.connect(self.old_library_path_selection_button_clicked)
         self.newLibraryPathSelectButton.clicked.connect(self.new_library_path_selection_button_clicked)
+        self.moveGameButton.setDisabled(True)
         #
 
     def retranslateUi(self, MainWindow):
@@ -199,7 +200,6 @@ class Ui_MainWindow(object):
     def game_result_list_box_selection_changed(self):
         selected_row = self.gameResultsListBox.currentIndex().row()
         selected_data = self.gameResultsListBox.currentIndex().data()
-
         self.update_status_box("Game Library list box clicked - row: {} item: {}".format(selected_row, selected_data))
         print("Game Library list box clicked - row: {} item: {}".format(selected_row, selected_data))
 
@@ -215,6 +215,7 @@ class Ui_MainWindow(object):
         self.workshopPathTextBox.setText(self.oldGameLibrary.gameObjects[selected_row].workshopDir)
         self.workshopManifestTextBox.setText(self.oldGameLibrary.gameObjects[selected_row].workshopManifestFilePath)
         self.steamIdTextBox.setText(self.oldGameLibrary.gameObjects[selected_row].steamId)
+        self.moveGameButton.setEnabled(True)
 
     def move_game_button_clicked(self):
         self.update_status_box("Move game button clicked")
@@ -225,19 +226,24 @@ class Ui_MainWindow(object):
         if self.newGameLibrary.isPathVerified is True:
             self.update_status_box("About to copy game")
             print("About to copy game")
-            if self.deleteOriginalcheckBox.isChecked():
-                self.oldGameLibrary.gameObjects[self.gameResultsListBox.currentIndex().row()].copy_game(self.newGameLibrary.libraryPath, delete_original=True)
-            #search the old library again now the game has been moved
+            #if self.deleteOriginalcheckBox.isChecked():
+            #    self.oldGameLibrary.gameObjects[self.gameResultsListBox.currentIndex().row()].copy_game(
+            #        self.newGameLibrary.libraryPath, delete_original=True)
+            #else:
+            #    self.oldGameLibrary.gameObjects[self.gameResultsListBox.currentIndex().row()].copy_game(
+            #        self.newGameLibrary.libraryPath, delete_original=False)
+            self.oldGameLibrary.gameObjects[self.gameResultsListBox.currentIndex().row()].copy_game(
+                self.newGameLibrary.libraryPath, delete_original=self.deleteOriginalcheckBox.isChecked())
+        # search the old library again now the game has been moved
             self.search_old_library_button_clicked()
         else:
             self.update_status_box("Validation of new library failed!")
             print("Validation of new library failed!")
-
+        self.moveGameButton.setDisabled(True)
 
     def update_status_box(self, text = None):
         self.statusListBox.addItem(text)
         self.statusListBox.scrollToBottom()
-
 
     def search_for_libraries_push_button_clicked(self):
         self.update_status_box("Search for libraries push button clicked")

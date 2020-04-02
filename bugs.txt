@@ -1,0 +1,13 @@
+Updating registry key SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Steam App 228980 with new uninstall location D:\Steam\steamapps\common\Steamworks Common Redistributables
+
+Traceback (most recent call last):
+  File ".\mainwindow.py", line 229, in move_game_button_clicked
+    self.oldGameLibrary.gameObjects[self.gameResultsListBox.currentIndex().row()].copy_game(self.newGameLibrary.libraryPath, delete_original=True)
+  File "C:\py\python-steam-gamemover\steammover1.py", line 368, in copy_game
+    self.update_registry_uninstall_location(newLibraryPath)
+  File "C:\py\python-steam-gamemover\steammover1.py", line 458, in update_registry_uninstall_location
+    key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, subkey, 0, winreg.KEY_ALL_ACCESS | winreg.KEY_WOW64_64KEY)
+FileNotFoundError: [WinError 2] The system cannot find the file specified
+
+
+catch errors from registry update. fail polietly if reg key does not exist
