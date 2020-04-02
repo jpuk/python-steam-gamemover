@@ -201,7 +201,7 @@ class Game:
         if self.find_game_manifest_file() is not None:
             self.manifestFilePath = self.find_game_manifest_file()
         else:
-            print("Error settings self.mainfestFilePath. Mainfest might be missing for game?")
+            print("Error settings self.mainfestFilePath. Mainfest might be missing for game? {}  {}".format(self.gameName, gameDirName))
             exit(1)
 
         self.gameDir = self.get_game_path()
@@ -294,7 +294,8 @@ class Game:
         print("Found steam id = {0}".format(substr[1].split(".",1)[0]))
         return substr[1].split(".", 1)[0]
 
-    def copy_game(self, newLibraryPath):
+    def copy_game(self, newLibraryPath, delete_original=False):
+        was_error = False
         if self.manifestFilePath != "":
             if self.statusWindow is not None:
                 self.statusWindow("Copying manifest...")
@@ -305,10 +306,12 @@ class Game:
                 if self.statusWindow is not None:
                     self.statusWindow("Oopps, this game already exists in the new location. Please check and make amendments manually.")
                 print("Oopps, this game already exists in the new location. Please check and make amendments manually. Quiting\n\n")
+                was_error = True
             except IOError:
                 if self.statusWindow is not None:
                     self.statusWindow("IO Error, please check that all paths are correct, the destination hard drive has enough space, etc")
                 print("IO Error, please check that all paths are correct, the destination hard drive has enough space, etc")
+                was_error = True
         if self.gameDir != "":
             if self.statusWindow is not None:
                 self.statusWindow("Copying game files....")
@@ -319,10 +322,12 @@ class Game:
                 if self.statusWindow is not None:
                     self.statusWindow("Oopps, this game already exists in the new location. Please check and make amendments manually.")
                 print("Oopps, this game already exists in the new location. Please check and make amendments manually. Quiting\n\n")
+                was_error = True
             except IOError:
                 if self.statusWindow is not None:
                     self.statusWindow("IO Error, please check that all paths are correct, the destination hard drive has enough space, etc")
                 print("IO Error, please check that all paths are correct, the destination hard drive has enough space, etc")
+                was_error = True
         if self.workshopManifestFilePath != "":
             if self.statusWindow is not None:
                 self.statusWindow("Copying workshop manifest file...")
@@ -333,10 +338,12 @@ class Game:
                 if self.statusWindow is not None:
                     self.statusWindow("Oopps, this game already exists in the new location. Please check and make amendments manually.")
                 print("Oopps, this game already exists in the new location. Please check and make amendments manually. Quiting\n\n")
+                was_error = True
             except IOError:
                 if self.statusWindow is not None:
                     self.statusWindow("IO Error, please check that all paths are correct, the destination hard drive has enough space, etc")
                 print("IO Error, please check that all paths are correct, the destination hard drive has enough space, etc")
+                was_error = True
         if self.workshopDir != "":
             if self.statusWindow is not None:
                 self.statusWindow("Copying workshop files...")
@@ -348,41 +355,79 @@ class Game:
                 if self.statusWindow is not None:
                     self.statusWindow("Oopps, this game already exists in the new location. Please check and make amendments manually.")
                 print("Oopps, this game already exists in the new location. Please check and make amendments manually. Quiting\n\n")
+                was_error = True
             except IOError:
                 if self.statusWindow is not None:
                     self.statusWindow("IO Error, please check that all paths are correct, the destination hard drive has enough space, etc")
                 print("IO Error, please check that all paths are correct, the destination hard drive has enough space, etc")
+                was_error = True
         # update uninstall paths in registry
         self.update_registry_uninstall_location(newLibraryPath)
 
-        # rename the originals and prompt user to delete them after checking that the game works
-        renamedManifest = str(self.manifestFilePath) + ".bak"
-        renamedGamedDir = str(self.gameDir) + ".bak"
-        renamedWorkshopDir = str(self.workshopDir) + ".bak"
-        renamedWorkshopManifest = str(self.workshopManifestFilePath) + ".bak"
-        if os.path.isfile(self.manifestFilePath):
-            os.rename(self.manifestFilePath, renamedManifest)
-        if os.path.isdir(self.gameDir):
-            os.rename(self.gameDir, renamedGamedDir)
-        if os.path.isfile(self.workshopManifestFilePath):
-            os.rename(self.workshopManifestFilePath, renamedWorkshopManifest)
-        if os.path.isdir(self.workshopDir):
-            os.rename(self.workshopDir, renamedWorkshopDir)
+        if was_error is not True:
+            if self.statusWindow is not None:
+                self.statusWindow("All Steam game files have now been copied to {0}".format(newLibraryPath))
+            print("All Steam game files have now been copied to {0}".format(newLibraryPath))
 
-        if self.statusWindow is not None:
-            self.statusWindow("All Steam game files have now been copied to {0}".format(newLibraryPath))
-            self.statusWindow("The original files and folders have not been removed. They have been renamed to avoid conflicting with the new steam library.")
-            self.statusWindow("Please make sure to remove the following files/folders once you have checked that the game works in the new location.")
-        print("All Steam game files have now been copied to {0}\nThe original files and folders have not been removed. They have been renamed to avoid conflicting with the new steam library.\nPlease make sure to remove the following files/folders once you have checked that the game works in the new location.\n".format(
-                newLibraryPath))
-        if self.statusWindow is not None:
-            self.statusWindow("{0}\n{1}\n{2}\n{3}\n".format(renamedManifest, renamedGamedDir, renamedWorkshopManifest,
-                                            renamedWorkshopDir))
-        print("{0}\n{1}\n{2}\n{3}\n".format(renamedManifest, renamedGamedDir, renamedWorkshopManifest,
-                                            renamedWorkshopDir))
-        if self.statusWindow is not None:
-            self.statusWindow("If the game is not working in the new location, close Steam and then rename the original files by removing '.bak' from the end of each of their filenames and deleting any duplicates in the new steam library")
-        print("If the game is not working in the new location, close Steam and then rename the original files by removing '.bak' from the end of each of their filenames and deleting any duplicates in the new steam library")
+            # todo error checking  on delete code
+            if delete_original is True:
+                if self.statusWindow is not None:
+                    self.statusWindow("deleting original files")
+                print("deleting original files and folders")
+                if os.path.isfile(self.manifestFilePath):
+                    if self.statusWindow is not None:
+                        self.statusWindow("deleting {}".format(self.manifestFilePath))
+                    print("deleting {}".format(self.manifestFilePath))
+                    os.remove(self.manifestFilePath)
+                if os.path.isdir(self.gameDir):
+                    if self.statusWindow is not None:
+                        self.statusWindow("deleting {}".format(self.gameDir))
+                    print("deleting {}".format(self.gameDir))
+                    shutil.rmtree(self.gameDir)
+                if os.path.isfile(self.workshopManifestFilePath):
+                    if self.statusWindow is not None:
+                        self.statusWindow("deleting {}".format(self.workshopManifestFilePath))
+                    print("deleting {}".format(self.workshopManifestFilePath))
+                    os.remove(self.workshopManifestFilePath)
+                if os.path.isdir(self.workshopDir):
+                    if self.statusWindow is not None:
+                        self.statusWindow("deleting {}".format(self.workshopDir))
+                    print("deleting {}".format(self.workshopDir))
+                    shutil.rmtree(self.workshopDir)
+            else:
+                # rename the originals and prompt user to delete them after checking that the game works
+                renamedManifest = str(self.manifestFilePath) + ".bak"
+                renamedGamedDir = str(self.gameDir) + ".bak"
+                renamedWorkshopDir = str(self.workshopDir) + ".bak"
+                renamedWorkshopManifest = str(self.workshopManifestFilePath) + ".bak"
+                if os.path.isfile(self.manifestFilePath):
+                    os.rename(self.manifestFilePath, renamedManifest)
+                if os.path.isdir(self.gameDir):
+                    os.rename(self.gameDir, renamedGamedDir)
+                if os.path.isfile(self.workshopManifestFilePath):
+                    os.rename(self.workshopManifestFilePath, renamedWorkshopManifest)
+                if os.path.isdir(self.workshopDir):
+                    os.rename(self.workshopDir, renamedWorkshopDir)
+                if self.statusWindow is not None:
+                    self.statusWindow("{0}\n{1}\n{2}\n{3}\n".format(renamedManifest, renamedGamedDir,
+                                                                    renamedWorkshopManifest,renamedWorkshopDir))
+                print("{0}\n{1}\n{2}\n{3}\n".format(renamedManifest, renamedGamedDir, renamedWorkshopManifest,
+                                                        renamedWorkshopDir))
+                if self.statusWindow is not None:
+                    self.statusWindow("The original files and folders have not been removed. They have been renamed to "
+                                      "avoid conflicting with the new steam library.")
+                    self.statusWindow("Please make sure to remove the following files/folders once you have checked that "
+                                      "the game works in the new location.")
+                print("The original files and folders have not been removed. They have been renamed to avoid conflicting "
+                      "with the new steam library.\nPlease make sure to remove the following files/folders once you have "
+                      "checked that the game works in the new location.\n".format(newLibraryPath))
+                if self.statusWindow is not None:
+                    self.statusWindow("If the game is not working in the new location, close Steam and then rename the "
+                                      "original files by removing '.bak' from the end of each of their filenames and "
+                                      "deleting any duplicates in the new steam library")
+                print("If the game is not working in the new location, close Steam and then rename the original files "
+                      "by removing '.bak' from the end of each of their filenames and deleting any duplicates in the "
+                      "new steam library")
 
     def scan_manifest(self, manifestFilePath):
         print("Scanning manifest file {0}".format(manifestFilePath))

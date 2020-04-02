@@ -13,10 +13,9 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_MainWindow(object):
     oldGameLibrary = object
     newGameLibrary = object
-
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(796, 1134)
+        MainWindow.resize(798, 1134)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.oldLibraryTextBox = QtWidgets.QLineEdit(self.centralwidget)
@@ -35,7 +34,7 @@ class Ui_MainWindow(object):
         self.searchOldLibraryButton.setGeometry(QtCore.QRect(570, 240, 191, 31))
         self.searchOldLibraryButton.setObjectName("searchOldLibraryButton")
         self.gameResultsListBox = QtWidgets.QListWidget(self.centralwidget)
-        self.gameResultsListBox.setGeometry(QtCore.QRect(18, 360, 761, 301))
+        self.gameResultsListBox.setGeometry(QtCore.QRect(8, 360, 781, 301))
         self.gameResultsListBox.setObjectName("gameResultsListBox")
         self.numberOfGamesInLibraryLabel = QtWidgets.QLabel(self.centralwidget)
         self.numberOfGamesInLibraryLabel.setGeometry(QtCore.QRect(18, 330, 251, 16))
@@ -65,7 +64,7 @@ class Ui_MainWindow(object):
         self.workshopManifestTextBox.setGeometry(QtCore.QRect(138, 790, 601, 22))
         self.workshopManifestTextBox.setObjectName("workshopManifestTextBox")
         self.label_7 = QtWidgets.QLabel(self.centralwidget)
-        self.label_7.setGeometry(QtCore.QRect(18, 830, 61, 16))
+        self.label_7.setGeometry(QtCore.QRect(20, 830, 61, 16))
         self.label_7.setObjectName("label_7")
         self.steamIdTextBox = QtWidgets.QLineEdit(self.centralwidget)
         self.steamIdTextBox.setGeometry(QtCore.QRect(138, 830, 113, 22))
@@ -80,17 +79,17 @@ class Ui_MainWindow(object):
         self.newLibraryPathSelectButton.setGeometry(QtCore.QRect(490, 280, 51, 28))
         self.newLibraryPathSelectButton.setObjectName("newLibraryPathSelectButton")
         self.statusListBox = QtWidgets.QListWidget(self.centralwidget)
-        self.statusListBox.setGeometry(QtCore.QRect(20, 900, 771, 151))
+        self.statusListBox.setGeometry(QtCore.QRect(10, 910, 781, 171))
         self.statusListBox.setObjectName("statusListBox")
         self.label_8 = QtWidgets.QLabel(self.centralwidget)
         self.label_8.setGeometry(QtCore.QRect(20, 870, 55, 16))
         self.label_8.setObjectName("label_8")
-        self.newLibrarySelectionListBox = QtWidgets.QListWidget(self.centralwidget)
-        self.newLibrarySelectionListBox.setGeometry(QtCore.QRect(290, 30, 256, 192))
-        self.newLibrarySelectionListBox.setObjectName("newLibrarySelectionListBox")
         self.oldLibrarySelectionListBox = QtWidgets.QListWidget(self.centralwidget)
         self.oldLibrarySelectionListBox.setGeometry(QtCore.QRect(20, 30, 256, 192))
         self.oldLibrarySelectionListBox.setObjectName("oldLibrarySelectionListBox")
+        self.newLibrarySelectionListBox = QtWidgets.QListWidget(self.centralwidget)
+        self.newLibrarySelectionListBox.setGeometry(QtCore.QRect(290, 30, 256, 192))
+        self.newLibrarySelectionListBox.setObjectName("newLibrarySelectionListBox")
         self.label_9 = QtWidgets.QLabel(self.centralwidget)
         self.label_9.setGeometry(QtCore.QRect(20, 10, 191, 16))
         self.label_9.setObjectName("label_9")
@@ -100,9 +99,12 @@ class Ui_MainWindow(object):
         self.searchForLibrariesPushButton = QtWidgets.QPushButton(self.centralwidget)
         self.searchForLibrariesPushButton.setGeometry(QtCore.QRect(570, 110, 191, 28))
         self.searchForLibrariesPushButton.setObjectName("searchForLibrariesPushButton")
+        self.deleteOriginalcheckBox = QtWidgets.QCheckBox(self.centralwidget)
+        self.deleteOriginalcheckBox.setGeometry(QtCore.QRect(580, 870, 121, 20))
+        self.deleteOriginalcheckBox.setObjectName("deleteOriginalcheckBox")
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 796, 26))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 798, 26))
         self.menubar.setObjectName("menubar")
         self.menuQuit = QtWidgets.QMenu(self.menubar)
         self.menuQuit.setObjectName("menuQuit")
@@ -117,7 +119,6 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
-
         # my message handlers
         self.searchOldLibraryButton.clicked.connect(self.search_old_library_button_clicked)
         self.gameResultsListBox.itemSelectionChanged.connect(self.game_result_list_box_selection_changed)
@@ -147,6 +148,7 @@ class Ui_MainWindow(object):
         self.label_9.setText(_translate("MainWindow", "Select old library to copy from:"))
         self.label_10.setText(_translate("MainWindow", "Select new library to copy to:"))
         self.searchForLibrariesPushButton.setText(_translate("MainWindow", "Search computer for libraries"))
+        self.deleteOriginalcheckBox.setText(_translate("MainWindow", "Delete original?"))
         self.menuQuit.setTitle(_translate("MainWindow", "Menu"))
         self.actionQuit.setText(_translate("MainWindow", "Quit"))
 
@@ -158,6 +160,7 @@ class Ui_MainWindow(object):
         if self.oldLibraryTextBox != "":
             self.oldGameLibrary = steammover.GameLibrary(self.oldLibraryTextBox.text(), self.update_status_box)
             self.numberOfGamesInLibraryLabel.setText("Number of games in library: {}".format(self.oldGameLibrary.numberOfGamesInLibrary))
+            # todo change text colour
             for game in self.oldGameLibrary.gameObjects:
                 sizeInMB = (float(game.sizeOnDisk) / (1024.0 * 1024.0))
                 listBoxString = game.gameName + " ----- " + "{:.2f} MB".format(sizeInMB)
@@ -192,7 +195,8 @@ class Ui_MainWindow(object):
         if self.newGameLibrary.isPathVerified is True:
             self.update_status_box("About to copy game")
             print("About to copy game")
-            self.oldGameLibrary.gameObjects[self.gameResultsListBox.currentIndex().row()].copy_game(self.newGameLibrary.libraryPath)
+            if self.deleteOriginalcheckBox.isChecked():
+                self.oldGameLibrary.gameObjects[self.gameResultsListBox.currentIndex().row()].copy_game(self.newGameLibrary.libraryPath, delete_original=True)
             #search the old library again now the game has been moved
             self.search_old_library_button_clicked()
         else:
@@ -208,6 +212,8 @@ class Ui_MainWindow(object):
     def search_for_libraries_push_button_clicked(self):
         self.update_status_box("Search for libraries push button clicked")
         print("Search for libraries push button clicked")
+        self.oldLibrarySelectionListBox.clear()
+        self.newLibrarySelectionListBox.clear()
         lib_search = steammover.LibraryFinder()
         for found_lib in lib_search.found_steam_library_paths:
             self.oldLibrarySelectionListBox.addItem(found_lib)
