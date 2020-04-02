@@ -91,8 +91,9 @@ def parse_acf(filename):
 # class definitions
 
 class LibraryFinder:
-    def __init__(self, drive_list = None):
+    def __init__(self, drive_list=None, statusWindow=None):
         self.found_steam_library_paths = []
+        self.statusWindow = statusWindow
         if drive_list is None:
             available_drives = ['%s:\\' % d for d in string.ascii_uppercase if os.path.exists('%s:' % d)]
         else:
@@ -108,6 +109,8 @@ class LibraryFinder:
             if file_found is not True:
                 for filename in filenames_o:
                     if str(filename).lower() == "steam.dll":
+                        if self.statusWindow is not None:
+                            self.statusWindow("steam.dll found {}".format(os.path.abspath(dirpath_o)))
                         print("steam.dll found {}".format(os.path.abspath(dirpath_o)))
                         self.found_steam_library_paths.append(os.path.abspath(dirpath_o))
                         file_found = True

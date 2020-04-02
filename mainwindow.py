@@ -229,7 +229,7 @@ class Ui_MainWindow(object):
         print("Search for libraries push button clicked")
         self.oldLibrarySelectionListBox.clear()
         self.newLibrarySelectionListBox.clear()
-        lib_search = steammover.LibraryFinder()
+        lib_search = steammover.LibraryFinder(statusWindow=self.update_status_box)
         for found_lib in lib_search.found_steam_library_paths:
             self.oldLibrarySelectionListBox.addItem(found_lib)
             self.newLibrarySelectionListBox.addItem(found_lib)
