@@ -175,14 +175,14 @@ class Ui_MainWindow(object):
     def old_library_path_selection_button_clicked(self):
         print("old library path selection box clicked")
         dirname = QtWidgets.QFileDialog.getExistingDirectory()
-        #print(dirname)
-        self.oldLibraryTextBox.setText(dirname)
+        if dirname is not "":
+            self.oldLibraryTextBox.setText(dirname)
 
     def new_library_path_selection_button_clicked(self):
         print("old library path selection box clicked")
         dirname = QtWidgets.QFileDialog.getExistingDirectory()
-        # print(dirname)
-        self.newLibraryTextBox.setText(dirname)
+        if dirname is not "":
+            self.newLibraryTextBox.setText(dirname)
 
     def search_old_library_button_clicked(self):
         self.update_status_box("Searching library for games\n")
@@ -226,12 +226,6 @@ class Ui_MainWindow(object):
         if self.newGameLibrary.isPathVerified is True:
             self.update_status_box("About to copy game")
             print("About to copy game")
-            #if self.deleteOriginalcheckBox.isChecked():
-            #    self.oldGameLibrary.gameObjects[self.gameResultsListBox.currentIndex().row()].copy_game(
-            #        self.newGameLibrary.libraryPath, delete_original=True)
-            #else:
-            #    self.oldGameLibrary.gameObjects[self.gameResultsListBox.currentIndex().row()].copy_game(
-            #        self.newGameLibrary.libraryPath, delete_original=False)
             self.oldGameLibrary.gameObjects[self.gameResultsListBox.currentIndex().row()].copy_game(
                 self.newGameLibrary.libraryPath, delete_original=self.deleteOriginalcheckBox.isChecked())
         # search the old library again now the game has been moved
@@ -258,6 +252,7 @@ class Ui_MainWindow(object):
     def old_library_selection_box_selection_changed(self):
         print("old lib selction box selection changed")
         self.oldLibraryTextBox.setText(self.oldLibrarySelectionListBox.currentIndex().data())
+        self.search_old_library_button_clicked()
 
     def new_library_selection_box_selection_changed(self):
         print("new lib selction box selection changed")

@@ -298,6 +298,15 @@ class Game:
         return substr[1].split(".", 1)[0]
 
     def copy_game(self, newLibraryPath, delete_original=False):
+        print("{} - {}".format(self.steamLibrary, newLibraryPath))
+        if str(self.steamLibrary).lower() == str(newLibraryPath).lower():
+            if self.statusWindow is not None:
+                self.statusWindow("Error, the old and new library paths are the same. {} - {}".format(self.steamLibrary, newLibraryPath))
+                self.statusWindow("Nothing was copied!")
+            print("Error, the old and new library paths are the same. {} - {}\n".format(self.steamLibrary, newLibraryPath))
+            print("Nothing was copied!")
+            return False
+
         was_error = False
         if self.manifestFilePath != "":
             if self.statusWindow is not None:
@@ -372,7 +381,7 @@ class Game:
                 self.statusWindow("All Steam game files have now been copied to {0}".format(newLibraryPath))
             print("All Steam game files have now been copied to {0}".format(newLibraryPath))
 
-            # todo error checking  on delete code
+            # todo error checking on delete code
             if delete_original is True:
                 if self.statusWindow is not None:
                     self.statusWindow("deleting original files")
@@ -439,11 +448,11 @@ class Game:
         self.sizeOnDisk = acf['AppState']['SizeOnDisk']
         return acf
 
-    def scan_registry_for_uninstall(self):
+    def scan_registry_for_game_path(self):
         if self.statusWindow is not None:
             self.statusWindow()
         print("Scanning registry for refrances of the game path {0}".format(self.gameDirName))
-        # do walk of registry and compare keys to gameDirName
+        # todo: registry walk and compare keys to gameDirName
 
         return "result"
 
@@ -463,6 +472,7 @@ class Game:
 
 def is_steam_running():
     print("Checking if Steam is running...")
+    # todo: implement code to check if steam is running and if so prompt user to close before proceeding
 
 
 
