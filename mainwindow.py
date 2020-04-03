@@ -218,6 +218,7 @@ class Ui_MainWindow(object):
         self.moveGameButton.setEnabled(True)
 
     def move_game_button_clicked(self):
+        # todo make async and update progress bar
         self.update_status_box("Move game button clicked")
         print("Move game button clicked")
         self.update_status_box("Validating new library at {}".format(self.newLibraryTextBox.text()))
@@ -240,6 +241,7 @@ class Ui_MainWindow(object):
         self.statusListBox.scrollToBottom()
 
     def search_for_libraries_push_button_clicked(self):
+        # todo make aysnc and update progress bar
         self.update_status_box("Search for libraries push button clicked")
         print("Search for libraries push button clicked")
         self.oldLibrarySelectionListBox.clear()

@@ -33,12 +33,6 @@ from os import walk
 import winreg
 import string
 
-# todo
-# anything registry related
-# -uninstall paths
-# checking for steam libries in registry if pos
-
-
 # steamtools - acf code
 def scan_for_next_token(f):
     while True:
@@ -94,6 +88,7 @@ class LibraryFinder:
     def __init__(self, drive_list=None, statusWindow=None):
         self.found_steam_library_paths = []
         self.statusWindow = statusWindow
+        # todo make async so each drive is checked at the same time
         if drive_list is None:
             available_drives = ['%s:\\' % d for d in string.ascii_uppercase if os.path.exists('%s:' % d)]
         else:
@@ -266,6 +261,9 @@ class Game:
             return path
 
     def find_game_manifest_file(self):
+        # todo: would this make more sense in GameLibrary class so that we don't scan the same files mulitple times
+        # move this to GameLibrary and implement a set_game_manifest_file() function and have this func just
+        # return that value
         steamAppsPath = os.path.normpath(os.path.join(self.steamLibrary, "steamapps"))
         #print("Searching for manifest file for {0} in {1}".format(self.gameDirName, steamAppsPath))
 
