@@ -174,15 +174,15 @@ class Ui_MainWindow(object):
     # message handler functions
     def old_library_path_selection_button_clicked(self):
         print("old library path selection box clicked")
-        dirname = QtWidgets.QFileDialog.getExistingDirectory()
-        if dirname is not "":
-            self.oldLibraryTextBox.setText(dirname)
+        dir_name = QtWidgets.QFileDialog.getExistingDirectory()
+        if dir_name != "":
+            self.oldLibraryTextBox.setText(dir_name)
 
     def new_library_path_selection_button_clicked(self):
         print("old library path selection box clicked")
-        dirname = QtWidgets.QFileDialog.getExistingDirectory()
-        if dirname is not "":
-            self.newLibraryTextBox.setText(dirname)
+        dir_name = QtWidgets.QFileDialog.getExistingDirectory()
+        if dir_name != "":
+            self.newLibraryTextBox.setText(dir_name)
 
     def search_old_library_button_clicked(self):
         self.update_status_box("Searching library for games\n")
