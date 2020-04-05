@@ -101,15 +101,16 @@ class LibraryFinder:
             if statusWindow is not None:
                 self.statusWindow("Library Search thread started for {}".format(drive))
             print("Library Search thread started for {}".format(drive))
-            threads.append(threading.Thread(target=self.search_folders_for_steam_dll, args=(path,)))
+            if self.search_common_library_locations_for_steam_dll(path) is not True:
+                threads.append(threading.Thread(target=self.search_folders_for_steam_dll, args=(path,)))
+
         for thread in threads:
             thread.start()
         for thread in threads:
             # wait for all threads to complete
             thread.join()
 
-    def search_folders_for_steam_dll(self, dirname_f):
-        file_found = False
+    def search_common_library_locations_for_steam_dll(self, dirname_f):
         # check common locations first \Program Files (x86)\Steam or \SteamLibrary\
         common_paths = [os.path.join(dirname_f, "Program files (x86)", "Steam"),
                         os.path.join(dirname_f, "SteamLibrary")]
@@ -120,22 +121,24 @@ class LibraryFinder:
                     self.statusWindow("steam.dll found at common path {}".format(c_path))
                 print("found at common path {}".format(c_path))
                 self.found_steam_library_paths.append(os.path.abspath(os.path.join(c_path)))
-                file_found = True
+                return True
+        return False
 
-        if file_found is not True:
-            for (dirpath_o, dirnames_o, filenames_o) in walk(dirname_f):
+    def search_folders_for_steam_dll(self, dirname_f):
+        file_found = False
+        for (dirpath_o, dirnames_o, filenames_o) in walk(dirname_f):
+            if file_found is not True:
+                for filename in filenames_o:
+                    if str(filename).lower() == "steam.dll":
+                        if self.statusWindow is not None:
+                            self.statusWindow("steam.dll found {}".format(os.path.abspath(dirpath_o)))
+                        print("steam.dll found {}".format(os.path.abspath(dirpath_o)))
+                        self.found_steam_library_paths.append(os.path.abspath(dirpath_o))
+                        return True
                 if file_found is not True:
-                    for filename in filenames_o:
-                        if str(filename).lower() == "steam.dll":
-                            if self.statusWindow is not None:
-                                self.statusWindow("steam.dll found {}".format(os.path.abspath(dirpath_o)))
-                            print("steam.dll found {}".format(os.path.abspath(dirpath_o)))
-                            self.found_steam_library_paths.append(os.path.abspath(dirpath_o))
-                            return True
-                    if file_found is not True:
-                        for dir_i in dirnames_o:
-                            self.search_folders_for_steam_dll(dirpath_o + "\\" + dir_i)
-                break
+                    for dir_i in dirnames_o:
+                        self.search_folders_for_steam_dll(dirpath_o + "\\" + dir_i)
+            break
 
 
 class GameLibrary:
