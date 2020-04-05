@@ -32,6 +32,7 @@ import sys
 from os import walk
 import winreg
 import string
+import threading
 
 # steamtools - acf code
 def scan_for_next_token(f):
@@ -86,9 +87,10 @@ def parse_acf(filename):
 
 class LibraryFinder:
     def __init__(self, drive_list=None, statusWindow=None):
+        threads = []
         self.found_steam_library_paths = []
         self.statusWindow = statusWindow
-        # todo make async so each drive is checked at the same time
+
         if drive_list is None:
             available_drives = ['%s:\\' % d for d in string.ascii_uppercase if os.path.exists('%s:' % d)]
         else:
@@ -96,25 +98,44 @@ class LibraryFinder:
 
         for drive in available_drives:
             path = os.path.abspath(drive)
-            self.search_folders_for_steam_dll(path)
+            if statusWindow is not None:
+                self.statusWindow("Library Search thread started for {}".format(drive))
+            print("Library Search thread started for {}".format(drive))
+            threads.append(threading.Thread(target=self.search_folders_for_steam_dll, args=(path,)))
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            # wait for all threads to complete
+            thread.join()
 
     def search_folders_for_steam_dll(self, dirname_f):
         file_found = False
-        for (dirpath_o, dirnames_o, filenames_o) in walk(dirname_f):
-            if file_found is not True:
-                for filename in filenames_o:
-                    if str(filename).lower() == "steam.dll":
-                        if self.statusWindow is not None:
-                            self.statusWindow("steam.dll found {}".format(os.path.abspath(dirpath_o)))
-                        print("steam.dll found {}".format(os.path.abspath(dirpath_o)))
-                        self.found_steam_library_paths.append(os.path.abspath(dirpath_o))
-                        file_found = True
-                        break
-                if file_found is not True:
-                    for dir_i in dirnames_o:
-                        self.search_folders_for_steam_dll(dirpath_o + "\\" + dir_i)
+        # check common locations first \Program Files (x86)\Steam or \SteamLibrary\
+        common_paths = [os.path.join(dirname_f, "Program files (x86)", "Steam"),
+                        os.path.join(dirname_f, "SteamLibrary")]
 
-            break
+        for c_path in common_paths:
+            if os.path.exists(os.path.join(c_path, "steam.dll")):
+                if self.statusWindow is not None:
+                    self.statusWindow("steam.dll found at common path {}".format(c_path))
+                print("found at common path {}".format(c_path))
+                self.found_steam_library_paths.append(os.path.abspath(os.path.join(c_path)))
+                file_found = True
+
+        if file_found is not True:
+            for (dirpath_o, dirnames_o, filenames_o) in walk(dirname_f):
+                if file_found is not True:
+                    for filename in filenames_o:
+                        if str(filename).lower() == "steam.dll":
+                            if self.statusWindow is not None:
+                                self.statusWindow("steam.dll found {}".format(os.path.abspath(dirpath_o)))
+                            print("steam.dll found {}".format(os.path.abspath(dirpath_o)))
+                            self.found_steam_library_paths.append(os.path.abspath(dirpath_o))
+                            return True
+                    if file_found is not True:
+                        for dir_i in dirnames_o:
+                            self.search_folders_for_steam_dll(dirpath_o + "\\" + dir_i)
+                break
 
 
 class GameLibrary:
@@ -196,12 +217,8 @@ class Game:
         self.sizeOnDisk = 0
         self.steamLibrary = steamLibrary
         self.gameDirName = gameDirName
-        if self.find_game_manifest_file() is not None:
-            self.manifestFilePath = self.find_game_manifest_file()
-        else:
-            print("Error settings self.mainfestFilePath. Mainfest might be missing for game? {}  {}".format(self.gameName, gameDirName))
-            exit(1)
-
+        self.manifestFilePath = str()
+        self.find_game_manifest_file()
         self.gameDir = self.get_game_path()
         self.steamId = self.find_steam_id()
         self.workshopManifestFilePath = self.get_workshop_manifest_path()
@@ -260,31 +277,34 @@ class Game:
             path = ""
             return path
 
+    def find_game_manifest_file_worker(self, file):
+        print("Parsing file {0} looking for string {1}".format(file, self.gameDirName) )
+        fd = open(file)
+        for line in fd:
+            if line.find("{}\"".format(self.gameDirName)) != -1:
+                # print("manifest found!")
+                found_manifest = file
+                self.manifestFilePath = os.path.abspath(file)
+                return found_manifest
+#        if foundManifest != "":
+#            return foundManifest
+
     def find_game_manifest_file(self):
         # todo: would this make more sense in GameLibrary class so that we don't scan the same files mulitple times
         # move this to GameLibrary and implement a set_game_manifest_file() function and have this func just
         # return that value
+        threads = []
         steamAppsPath = os.path.normpath(os.path.join(self.steamLibrary, "steamapps"))
-        #print("Searching for manifest file for {0} in {1}".format(self.gameDirName, steamAppsPath))
-
         manifestFiles = glob.glob(steamAppsPath + "\\*.acf")
-        #print(manifestFiles)
-        #print(steamAppsPath + "\\*.acf")
+
         for file in manifestFiles:
-            foundManifest = ""
-            #print("Parsing file {0} looking for string {1}".format(file, self.gameDirName) )
-
-            fd = open(file)
-            for line in fd:
-                if line.find("{}\"".format(self.gameDirName)) != -1:
-                    #print("manifest found!")
-                    foundManifest = file
-                    return foundManifest
-                #else:
-                    #print("manifest not found!")
-
-            if foundManifest != "":
-                return foundManifest
+            print("starting thread")
+            threads.append(threading.Thread(target=self.find_game_manifest_file_worker, args=(file,)))
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            # wait for all threads to complete
+            thread.join()
 
     def find_steam_id(self):
         # extract steam id from manifest filename

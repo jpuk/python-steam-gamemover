@@ -10,7 +10,6 @@ import steammover1 as steammover
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 
-
 class Ui_MainWindow(object):
     oldGameLibrary = object
     newGameLibrary = object
@@ -242,6 +241,7 @@ class Ui_MainWindow(object):
 
     def search_for_libraries_push_button_clicked(self):
         # todo make aysnc and update progress bar
+        self.searchForLibrariesPushButton.setDisabled(True)
         self.update_status_box("Search for libraries push button clicked")
         print("Search for libraries push button clicked")
         self.oldLibrarySelectionListBox.clear()
@@ -250,6 +250,7 @@ class Ui_MainWindow(object):
         for found_lib in lib_search.found_steam_library_paths:
             self.oldLibrarySelectionListBox.addItem(found_lib)
             self.newLibrarySelectionListBox.addItem(found_lib)
+        self.searchForLibrariesPushButton.setEnabled(True)
 
     def old_library_selection_box_selection_changed(self):
         print("old lib selction box selection changed")
