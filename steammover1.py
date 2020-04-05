@@ -293,9 +293,7 @@ class Game:
 #            return foundManifest
 
     def find_game_manifest_file(self):
-        # todo: would this make more sense in GameLibrary class so that we don't scan the same files mulitple times
-        # move this to GameLibrary and implement a set_game_manifest_file() function and have this func just
-        # return that value
+        # todo: would this make more sense in GameLibrary class so that we don't scan the same files multiple times?
         threads = []
         steamAppsPath = os.path.normpath(os.path.join(self.steamLibrary, "steamapps"))
         manifestFiles = glob.glob(steamAppsPath + "\\*.acf")
@@ -472,23 +470,26 @@ class Game:
     def scan_registry_for_game_path(self):
         if self.statusWindow is not None:
             self.statusWindow()
-        print("Scanning registry for refrances of the game path {0}".format(self.gameDirName))
+        print("Scanning registry for references of the game path {0}".format(self.gameDirName))
         # todo: registry walk and compare keys to gameDirName
 
         return "result"
 
     def update_registry_uninstall_location(self, newSteamLibraryPath):
-        new_install_location = newSteamLibraryPath + "\\steamapps\\common\\" + self.gameName
-        subkey = r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Steam App " + self.steamId
+        new_install_location = str(os.path.join(newSteamLibraryPath, "steamapps", "common", self.gameName))
+        sub_key = r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Steam App " + self.steamId
 
         if self.statusWindow is not None:
-            self.statusWindow("Updating registry key {0} with new uninstall location {1}\n".format(subkey, new_install_location))
-        print("Updating registry key {0} with new uninstall location {1}\n".format(subkey, new_install_location))
-        # todo error checking on updating registry key
-        key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, subkey, 0, winreg.KEY_ALL_ACCESS | winreg.KEY_WOW64_64KEY)
-        winreg.SetValueEx(key, "InstallLocation", 0, winreg.REG_SZ, new_install_location)
-        winreg.CloseKey(key)
-
+            self.statusWindow("Updating registry key {0} with new uninstall location {1}\n".format(sub_key, new_install_location))
+        print("Updating registry key {0} with new uninstall location {1}\n".format(sub_key, new_install_location))
+        try:
+            key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, sub_key, 0, winreg.KEY_ALL_ACCESS | winreg.KEY_WOW64_64KEY)
+            winreg.SetValueEx(key, "InstallLocation", 0, winreg.REG_SZ, new_install_location)
+            winreg.CloseKey(key)
+        except:
+            if self.statusWindow is not None:
+                self.statusWindow("Registry uninstall key not found")
+            print("Registry uninstall key not found")
 # functions
 
 def is_steam_running():
