@@ -7,6 +7,7 @@
 # WARNING! All changes made in this file will be lost!
 
 import steammover1 as steammover
+import os
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 
@@ -82,7 +83,7 @@ class Ui_MainWindow(object):
         self.statusListBox.setGeometry(QtCore.QRect(830, 30, 551, 801))
         self.statusListBox.setObjectName("statusListBox")
         self.label_8 = QtWidgets.QLabel(self.centralwidget)
-        self.label_8.setGeometry(QtCore.QRect(820, 10, 55, 16))
+        self.label_8.setGeometry(QtCore.QRect(830, 10, 55, 16))
         self.label_8.setObjectName("label_8")
         self.oldLibrarySelectionListBox = QtWidgets.QListWidget(self.centralwidget)
         self.oldLibrarySelectionListBox.setGeometry(QtCore.QRect(20, 30, 271, 192))
@@ -144,6 +145,9 @@ class Ui_MainWindow(object):
         self.oldLibraryPathSelectButton.clicked.connect(self.old_library_path_selection_button_clicked)
         self.newLibraryPathSelectButton.clicked.connect(self.new_library_path_selection_button_clicked)
         self.moveGameButton.setDisabled(True)
+        self.fileSizeComboBox.addItem("MB")
+        self.fileSizeComboBox.addItem("GB")
+        self.fileSizeComboBox.currentIndexChanged.connect(self.file_size_combo_box_selection_changed)
         #
 
     def retranslateUi(self, MainWindow):
@@ -171,17 +175,22 @@ class Ui_MainWindow(object):
         self.actionQuit.setText(_translate("MainWindow", "Quit"))
 
     # message handler functions
+    def file_size_combo_box_selection_changed(self):
+        print("Listing file size combo box changed {}".format(self.fileSizeComboBox.currentIndex()))
+        if self.oldLibraryTextBox.text() != "":
+            self.search_old_library_button_clicked()
+
     def old_library_path_selection_button_clicked(self):
         print("old library path selection box clicked")
         dir_name = QtWidgets.QFileDialog.getExistingDirectory()
         if dir_name != "":
-            self.oldLibraryTextBox.setText(dir_name)
+            self.oldLibraryTextBox.setText(os.path.abspath(dir_name))
 
     def new_library_path_selection_button_clicked(self):
         print("old library path selection box clicked")
         dir_name = QtWidgets.QFileDialog.getExistingDirectory()
         if dir_name != "":
-            self.newLibraryTextBox.setText(dir_name)
+            self.newLibraryTextBox.setText(os.path.abspath(dir_name))
 
     def search_old_library_button_clicked(self):
         self.update_status_box("Searching library for games\n")
@@ -191,10 +200,16 @@ class Ui_MainWindow(object):
             self.oldGameLibrary = steammover.GameLibrary(self.oldLibraryTextBox.text(), self.update_status_box)
             self.numberOfGamesInLibraryLabel.setText("Number of games in library: {}".format(self.oldGameLibrary.numberOfGamesInLibrary))
             # todo change text colour
-            for game in self.oldGameLibrary.gameObjects:
-                sizeInMB = (float(game.sizeOnDisk) / (1024.0 * 1024.0))
-                listBoxString = game.gameName + " ----- " + "{:.2f} MB".format(sizeInMB)
-                self.gameResultsListBox.addItem(listBoxString)
+            if self.oldGameLibrary.gameObjects is not None:
+                for game in self.oldGameLibrary.gameObjects:
+                    if self.fileSizeComboBox.currentIndex() == 0:
+                        sizeInMB = (float(game.sizeOnDisk) / (1024.0 * 1024.0))
+                        listBoxString = game.gameName + " ----- " + "{:.2f} MB".format(sizeInMB)
+                    else:
+                        sizeInGB = (float(game.sizeOnDisk) / (1024.0 * 1024.0 * 1024.0))
+                        listBoxString = game.gameName + " ----- " + "{:.2f} GB".format(sizeInGB)
+
+                    self.gameResultsListBox.addItem(listBoxString)
 
     def game_result_list_box_selection_changed(self):
         selected_row = self.gameResultsListBox.currentIndex().row()
