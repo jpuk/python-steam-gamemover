@@ -1,7 +1,7 @@
 # Steam Game Mover QT
 #### A simple program to help you move games between steam libraries on different drives.
-(This program currently only works with Steam on Windows and is in very early development. 
-You will need to have Python 3 installed to run)
+(This program currently only works with Steam on Windows. 
+You will need to have Python 3 installed to run.)
 
 Steam Libraries must already exist and have been initialised by Steam. (to do this at least one game needs to have been 
 installed to the library from within steam) 
@@ -10,13 +10,13 @@ Make sure Steam is fully shutdown before attempting to move games from one libra
 
 The program can be executed from the command line by typing:
 
-```:> Python ./steammover1.py directory_of_old_steam_library directory_of_new_steam_library```
+```:> Python ./game-mover-cli.py directory_of_old_steam_library directory_of_new_steam_library```
 
 Follow the on-screen instruction to select the game you wish to move.
 
-I also provide a graphical user interface which can be executed by typing:
+I also provide a more feature rich graphical user interface which can be executed by typing:
 
-```:> Python ./mainwindow.py```
+```:> Python ./game-mover-gui-qt.py```
 
 You will need to have PyQt5 installed to use the GUI.
 
