@@ -28,6 +28,7 @@
 import glob
 import os
 import shutil
+import psutil
 import string
 import threading
 import winreg
@@ -490,14 +491,19 @@ class Game:
             if self.statusWindow is not None:
                 self.statusWindow("Registry uninstall key not found")
             print("Registry uninstall key not found")
+
 # functions
+
 
 def is_steam_running():
     print("Checking if Steam is running...")
-    # todo: implement code to check if steam is running and if so prompt user to close before proceeding
-
-
-
+    for proc in psutil.process_iter():
+        name = proc.name()
+        if str(name).lower() == "steam.exe":
+            print("Found {} running!".format(name))
+            return True
+    print("Steam is not running")
+    return False
 
 
 

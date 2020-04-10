@@ -156,6 +156,7 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
+
         # my message handlers
         self.searchOldLibraryButton.clicked.connect(self.search_old_library_button_clicked)
         self.gameResultsListBox.itemSelectionChanged.connect(self.game_result_list_box_selection_changed)
@@ -257,20 +258,25 @@ class Ui_MainWindow(object):
         # todo make async and update progress bar
         self.update_status_box("Move game button clicked")
         print("Move game button clicked")
-        self.update_status_box("Validating new library at {}".format(self.newLibraryTextBox.text()))
-        print("Validating new library at {}".format(self.newLibraryTextBox.text()))
-        self.newGameLibrary = steammover.GameLibrary(self.newLibraryTextBox.text(), self.update_status_box())
-        if self.newGameLibrary.isPathVerified is True:
-            self.update_status_box("About to copy game")
-            print("About to copy game")
-            self.oldGameLibrary.gameObjects[self.gameResultsListBox.currentIndex().row()].copy_game(
-                self.newGameLibrary.libraryPath, delete_original=self.deleteOriginalcheckBox.isChecked())
-        # search the old library again now the game has been moved
-            self.search_old_library_button_clicked()
+        # check that steam isn't running
+        if steammover.is_steam_running() is True:
+            self.update_status_box("Refusing to move game while Steam is open. Please close it and try again.")
+            return False
         else:
-            self.update_status_box("Validation of new library failed!")
-            print("Validation of new library failed!")
-        self.moveGameButton.setDisabled(True)
+            self.update_status_box("Validating new library at {}".format(self.newLibraryTextBox.text()))
+            print("Validating new library at {}".format(self.newLibraryTextBox.text()))
+            self.newGameLibrary = steammover.GameLibrary(self.newLibraryTextBox.text(), self.update_status_box())
+            if self.newGameLibrary.isPathVerified is True:
+                self.update_status_box("About to copy game")
+                print("About to copy game")
+                self.oldGameLibrary.gameObjects[self.gameResultsListBox.currentIndex().row()].copy_game(
+                    self.newGameLibrary.libraryPath, delete_original=self.deleteOriginalcheckBox.isChecked())
+            # search the old library again now the game has been moved
+                self.search_old_library_button_clicked()
+            else:
+                self.update_status_box("Validation of new library failed!")
+                print("Validation of new library failed!")
+            self.moveGameButton.setDisabled(True)
 
     def update_status_box(self, text = None):
         self.statusListBox.addItem(text)
@@ -308,4 +314,10 @@ if __name__ == "__main__":
     ui = Ui_MainWindow()
     ui.setupUi(MainWindow)
     MainWindow.show()
+    # check that steam isn't running
+    if steammover.is_steam_running() is True:
+        error_dialog = QtWidgets.QErrorMessage()
+        error_dialog.showMessage("Error! Steam client is running!! Please make sure to close steam before "
+                                 "moving any games")
+
     sys.exit(app.exec_())
