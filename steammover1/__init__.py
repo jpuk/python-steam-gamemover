@@ -28,10 +28,11 @@
 import glob
 import os
 import shutil
-from os import walk
-import winreg
 import string
 import threading
+import winreg
+from os import walk
+
 
 # steamtools - acf code
 def scan_for_next_token(f):

@@ -26,9 +26,11 @@
 #
 # WARNING! All changes made in this file will be lost!
 
-import steammover1 as steammover
 import os
-from PyQt5 import QtCore, QtGui, QtWidgets
+
+from PyQt5 import QtCore, QtWidgets
+
+import steammover1 as steammover
 
 
 class Ui_MainWindow(object):
